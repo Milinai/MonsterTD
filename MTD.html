@@ -34,11 +34,10 @@ var maparray = [
 2,0,0,0,0,0,0,6,4,1,0,2,0,0,0,0,
 2,0,0,0,0,0,0,3,4,4,4,1,0,0,0,0
 ];
-
 class Game{
 	constructor(){
 		this.renderer = new Renderer();
-		this.floormap = new Map(maparray);
+		this.map = new Map(maparray);
 		this.blockmap = new BlockMap();
 		this.scale = 32;
 		this.mx = 0;
@@ -101,11 +100,10 @@ class Ground{
 "data:image/png;base64,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";
 	}
 }
-
 class BlockMap{
 	constructor(){
 		this.map = [];
-		for(let i = 0; i < game.floormap.size; i++){
+		for(let i = 0; i < 256; i++){
 			this.map[i] = new Block(0);
 		}
 	}
@@ -122,9 +120,7 @@ class Block{
 "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwgAADsIBFShKgAAAABh0RVh0U29mdHdhcmUAcGFpbnQubmV0IDQuMS4xYyqcSwAAAYlJREFUWEfdldFtg0AQBSnLn7TgDiiFetxUvlIHyTqe0/J43F3ISZGMNJIFezsDP562adqUD2Ge50voHucqATrsFsKyLBY3C7p/F8BNdzBwsnVdd7gZtyvIESXADeZlKmyRz7rdzYAz8ef3bA2dP4soAfFDA1Sukjjo0LlaBN5nQH5wJnfCGr0Ru4BRcmhF2IBRcnARNoC6kXLIEXhKADXICXCLCrebx82+IIAIvL8LyLL7fU9+Zs52B8RgNSBLH48f8r1KABGHgLiRA9yC8nZZrBBQiSCAiBIQD5oBvGXI9CKACLODACKuBfC2enH//QOI0Av51QAiqgH6FRTkjQB8JSB/hRjq+go5JN+ryHMA3kNA11fQEMRgziL/WwBkWcbNvjgN+Pc/IwKIoHJURJYTgM8GjIxw8mrAyIiWPCgBvRHghIHOteTPgDioAYFGgEoUnXfyIJzhPg0IOOxCWuSzbvch4CwiyMugJgS3K8BXAnIEuIPgZIGbBd2PtwRkdNgt7EH3HF3T9gUNoXJtl4IqHwAAAABJRU5ErkJggg==";
 	}
 }
-
 var game = new Game(), ctx;
-
 setTimeout(function(){
 	ctx = document.getElementById("can").getContext("2d");
 	document.getElementById("can").onmousemove = function(){
@@ -132,7 +128,7 @@ setTimeout(function(){
 		game.my = event.clientY;
 	}
 	document.getElementById("can").onclick = function(){
-		if(game.mx <= game.scale * game.floormap.width && game.selectedblock !== 0){
+		if(game.mx <= game.scale * game.map.width && game.selectedblock !== 0){
 			game.blockmap.placeBlock(game.selectedblock, Math.floor(game.mx / game.scale), Math.floor(game.my / game.scale));
 		}
 	}

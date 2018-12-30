@@ -69,28 +69,24 @@ class Game{
 		}
 		for(let i = 0; i < this.map.width; i++){
 			for(let j = 0; j < this.map.height; j++){
-				this.renderer.addToBuffer(new Ground(this.map.array[i + j * this.map.width]).texture, i * this.scale, j * this.scale, 0);
+				this.renderer.addToBuffer(["image", new Ground(this.map.array[i + j * this.map.width]).texture, i * this.scale, j * this.scale, 0]);
 			}
 		}
 		for(let i = 0; i < this.map.width; i++){
 			for(let j = 0; j < this.map.height; j++){
-				this.renderer.addToBuffer(this.blockmap.getTextureOfBlock(i, j), i * this.scale, j * this.scale, 0);
+				this.renderer.addToBuffer(["image", this.blockmap.getTextureOfBlock(i, j), i * this.scale, j * this.scale, 0]);
 			}
 		}
-		for(let i = 0; i < this.blockmenu.items.length; i++){
-			this.renderer.addToBuffer(this.blockmenu.items[i].texture, this.blockmenu.items[i].xPos, this.blockmenu.items[i].yPos);
-		}
-		for(let i = 0; i < this.resourcemenu.items.length; i++){
-			this.renderer.addToBuffer(this.resourcemenu.items[i].texture, this.resourcemenu.items[i].xPos, this.resourcemenu.items[i].yPos);
-		}
-		this.renderer.addText(this.resources.stone, this.resourcemenu.items[0].xPos + 10, this.resourcemenu.items[0].yPos, "#FFF", 8);
-		this.renderer.addText(this.resources.coal, this.resourcemenu.items[1].xPos + 10, this.resourcemenu.items[1].yPos, "#FFF", 8);
-		this.renderer.addText(this.resources.iron, this.resourcemenu.items[2].xPos + 10, this.resourcemenu.items[2].yPos, "#FFF", 8);
-		this.renderer.addText(this.resources.copper, this.resourcemenu.items[3].xPos + 10, this.resourcemenu.items[3].yPos, "#FFF", 8);
-		this.renderer.addText(this.resources.tin, this.resourcemenu.items[4].xPos + 10, this.resourcemenu.items[4].yPos, "#FFF", 8);
-		this.renderer.addText(this.resources.bronze, this.resourcemenu.items[5].xPos + 10, this.resourcemenu.items[5].yPos, "#FFF", 8);
 
-		this.renderer.addText("Test", 100, 200, "#FFF", 10);
+		this.blockmenu.render();
+		this.resourcemenu.render();
+
+		this.renderer.addToBuffer(["text", this.resources.stone, this.resourcemenu.items[0].xPos + 10, this.resourcemenu.items[0].yPos, "#FFF", 8]);
+		this.renderer.addToBuffer(["text", this.resources.coal, this.resourcemenu.items[1].xPos + 10, this.resourcemenu.items[1].yPos, "#FFF", 8]);
+		this.renderer.addToBuffer(["text", this.resources.iron, this.resourcemenu.items[2].xPos + 10, this.resourcemenu.items[2].yPos, "#FFF", 8]);
+		this.renderer.addToBuffer(["text", this.resources.copper, this.resourcemenu.items[3].xPos + 10, this.resourcemenu.items[3].yPos, "#FFF", 8]);
+		this.renderer.addToBuffer(["text", this.resources.tin, this.resourcemenu.items[4].xPos + 10, this.resourcemenu.items[4].yPos, "#FFF", 8]);
+		this.renderer.addToBuffer(["text", this.resources.bronze, this.resourcemenu.items[5].xPos + 10, this.resourcemenu.items[5].yPos, "#FFF", 8]);
 
 		this.renderer.render();
 	}
@@ -99,24 +95,34 @@ class Renderer{
 	constructor(){
 		this.buffer = [];
 	}
-	addToBuffer(image, x, y, rotation){
-		//if(image.length > 9){
-			this.buffer[this.buffer.length] = [new Image(), x, y, rotation];
-			this.buffer[this.buffer.length - 1][0].src = image;
-		/*}
-		else{
-			this.bu
-		}*/
-	}
-	addText(text, x, y, color, size){
-		ctx.fillStyle = color;
-		ctx.font = size + "px Arial";
-		ctx.fillText(text, x, y + size);
+	addToBuffer(input){
+		// Images:  [type, str, x, y, rotation]
+		// Texts:   [type, str, x, y, color, size]
+		// Squares: [type, x, y, width, height, color]
+		this.buffer[this.buffer.length] = input;
 	}
 	render(){
 		for(let i = 0; i < this.buffer.length; i++){
-			ctx.drawImage((this.buffer[i][0]), (this.buffer[i][1]), (this.buffer[i][2]));
+			switch(this.buffer[i][0]){
+				case "image":
+					let tmp = new Image();
+					tmp.src = this.buffer[i][1];
+					ctx.drawImage(tmp, this.buffer[i][2], this.buffer[i][3]);
+					break;
+				case "text":
+					ctx.fillStyle = this.buffer[i][4];
+					ctx.font = this.buffer[i][5] + "px Arial";
+					ctx.fillText(this.buffer[i][1], this.buffer[i][2], this.buffer[i][3] + this.buffer[i][5]);
+					break;
+				case "square":
+					ctx.fillStyle = this.buffer[i][5];
+					ctx.fillRect(this.buffer[i][1], this.buffer[i][2], this.buffer[i][3], this.buffer[i][4]);
+					break;
+				default:
+					break;
+			}
 		}
+		//console.log(this.buffer.length);
 		this.buffer = [];
 	}
 }
@@ -162,6 +168,14 @@ class BlockMap{
 	}
 	placeBlock(block, x, y){
 		if(game.map.array[x + y * new Map().width] === 0 && this.map[x + y * new Map().width].id === 0){
+			for(var i in block.cost){
+				if(game.resources[i] < block.cost[i]){
+					return;
+				}
+			} // else
+			for(var i in block.cost){
+				game.resources.spend(i, block.cost[i]);
+			}
 			this.map[x + y * new Map().width] = block;
 		}
 		else if(game.selectedblock === 0){
@@ -184,6 +198,9 @@ class Block{
 		this.id === 2 ? "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjEuNWRHWFIAAAFvSURBVEhLtZDblYMwEENdqkuhiPxnq9l60gGR0SAPfuI9i858gK25lyT8PJlt2x4UgB5jNAFe/j2gLwjCay/GLvq5JSigzbFqlYmgoITfNCzzuSjYmstIcFkm7qSn2/MkjWtyV+kK8o4DqRY+u4271QoJTFugal4+cCVdo1rlGAq0doLYeX92js7TqDwVGF2CE8GO6BoVvABDWl9wpQPEwu4ydpB2S0BKLeAWc1dQ0wtBcOEJcwBSCsdcQDpjYBeeo3BYTDMX2POKAIMyHeKMBMyqgA5x8NAW4DfimYfIksD+3qmADoa3jIGP8ORCnwoQ7+AOzxl+MsOVwecjtwQYUjA+Eqi2Iug7NFxRwdMxpDUEyEXgHBhPR/KVyo6ODAUdB4d9e1XtXCQHaQsQVfMyxtHZv9xWdKQrQLSQxoFUzoeuyV1lJED8ZpoDZ1cVGsMrn4mAKSjNsWqVWwKlgGLsop81wR+SBXp5IuFReozxCypVjy8CgRtIAAAAAElFTkSuQmCC" :
 		this.id === 3 ?
 "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjEuNWRHWFIAAABGSURBVEhL7c2hEQAgEANBSk0pXwql8oIBRwxxty4mN2ZSVQUD/S5pB3p81+8E3ghYBCwCFgGLgEXAImARsG7gjIQRfZe0ADRWAFs3kV8fAAAAAElFTkSuQmCC" : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjEuM40k/WcAAAANSURBVBhXY/j//z8DAAj8Av6IXwbgAAAAAElFTkSuQmCC";
+		this.cost = this.id === 2 ? new ResourceCollection(10, 0, 0, 0, 0, 0) :
+		this.id === 3 ? new ResourceCollection(10, 0, 1, 0, 0, 0) :
+		new ResourceCollection(0, 0, 0, 0, 0, 0);
 	}
 }
 
@@ -196,12 +213,16 @@ class Menu{
 		this.leftpadding = leftpadding;
 		this.toppadding = toppadding;
 		this.items = [];
-		game.renderer.addToBuffer(background, this.x, this.y, 0);
 	}
 	appendItem(item){
 		item.menu = this;
 		this.items[this.items.length] = item;
-		game.renderer.addToBuffer(item.texture, item.x, item.y, 0);
+	}
+	render(){
+		game.renderer.addToBuffer(["image", this.background, this.x, this.y, 0]);
+		for(let i = 0; i < this.items.length; i++){
+			game.renderer.addToBuffer(["image", this.items[i].texture, this.items[i].xPos, this.items[i].yPos]);
+		}
 	}
 }
 class MenuItem{
@@ -230,12 +251,6 @@ class MenuItem{
 	act(){
 		this.clickaction();
 	}
-	/*addText(text){
-		
-	}
-	appendToMenu(menu){
-		
-	}*/
 }
 
 class ResourceCollection{
